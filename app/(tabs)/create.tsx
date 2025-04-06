@@ -1,168 +1,184 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Switch,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '@/constants/theme';
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-interface CreateOption {
-  id: string;
-  title: string;
-  icon: IconName;
-  color: string;
+interface PostData {
+  type: 'quote' | 'update';
+  content: string;
+  quoteInfo: {
+    originalAuthor: string;
+    bookTitle: string;
+    pageNumber: string;
+    year: string;
+  } | null;
 }
 
-const createOptions: CreateOption[] = [
-  { 
-    id: '1', 
-    title: 'New Post', 
-    icon: 'create-outline',
-    color: '#32d296'
-  },
-  { 
-    id: '2', 
-    title: 'New Quote', 
-    icon: 'chatbubble-outline',
-    color: '#6C5CE7'
-  },
-  { 
-    id: '3', 
-    title: 'New Photo', 
-    icon: 'camera-outline',
-    color: '#FF7675'
-  },
-  { 
-    id: '4', 
-    title: 'New Poll', 
-    icon: 'bar-chart-outline',
-    color: '#FDCB6E'
-  },
-  { 
-    id: '5', 
-    title: 'New Story', 
-    icon: 'book-outline',
-    color: '#00B894'
-  },
-];
+export default function CreatePost() {
+  const router = useRouter();
+  const [isQuote, setIsQuote] = useState(false);
+  const [postData, setPostData] = useState<PostData>({
+    type: 'update',
+    content: '',
+    quoteInfo: null,
+  });
 
-const { width, height } = Dimensions.get('window');
-const CIRCLE_RADIUS = width * 0.3; // Radius of the circle where buttons will be placed
+  const handleSubmit = () => {
+    if (!postData.content.trim()) {
+      // Show error or alert
+      return;
+    }
 
-export default function Create() {
-  const [isOpen, setIsOpen] = useState(false);
-  const animation = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0)).current;
-
-  const toggleMenu = () => {
-    const toValue = isOpen ? 0 : 1;
-    
-    Animated.parallel([
-      Animated.timing(animation, {
-        toValue,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    setIsOpen(!isOpen);
+    // Here you would typically send the data to your backend
+    // For now, we'll just navigate back
+    console.log('New Post:', postData);
+    router.back();
   };
 
-  const renderOption = (option: CreateOption, index: number) => {
-    const angle = (2 * Math.PI * index) / createOptions.length;
-    const x = CIRCLE_RADIUS * Math.cos(angle - Math.PI / 2);
-    const y = CIRCLE_RADIUS * Math.sin(angle - Math.PI / 2);
-
-    const optionStyle = {
-      transform: [
-        {
-          translateX: animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, x],
-          }),
+  const updatePostData = (field: string, value: string) => {
+    if (field === 'content' || field === 'type') {
+      setPostData(prev => ({ ...prev, [field]: value }));
+    } else {
+      setPostData(prev => ({
+        ...prev,
+        quoteInfo: {
+          ...prev.quoteInfo!,
+          [field]: value,
         },
-        {
-          translateY: animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, y],
-          }),
-        },
-        {
-          scale: animation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0.3, 1],
-          }),
-        },
-      ],
-    };
-
-    return (
-      <Animated.View key={option.id} style={[styles.optionButton, optionStyle]}>
-        <TouchableOpacity
-          style={[styles.optionTouchable, { backgroundColor: option.color }]}
-          onPress={() => {
-            toggleMenu();
-            // Handle option press
-            console.log(`Selected: ${option.title}`);
-          }}
-        >
-          <Ionicons name={option.icon} size={24} color="#fff" />
-        </TouchableOpacity>
-        <Animated.Text
-          style={[
-            styles.optionLabel,
-            {
-              opacity: animation,
-              transform: [{ scale: animation }],
-            },
-          ]}
-        >
-          {option.title}
-        </Animated.Text>
-      </Animated.View>
-    );
+      }));
+    }
   };
 
-  const overlayStyle = {
-    opacity: animation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 0.7],
-    }),
+  const handleTypeToggle = (value: boolean) => {
+    setIsQuote(value);
+    setPostData({
+      type: value ? 'quote' : 'update',
+      content: '',
+      quoteInfo: value ? {
+        originalAuthor: '',
+        bookTitle: '',
+        pageNumber: '',
+        year: '',
+      } : null,
+    });
   };
 
   return (
-    <View style={styles.container}>
-      {isOpen && (
-        <Animated.View style={[styles.overlay, overlayStyle]} />
-      )}
-      
-      <View style={styles.menuContainer}>
-        {createOptions.map((option, index) => renderOption(option, index))}
-        
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <View style={styles.header}>
         <TouchableOpacity
-          style={[styles.mainButton, isOpen && styles.mainButtonActive]}
-          onPress={toggleMenu}
+          onPress={() => router.back()}
+          style={styles.backButton}
         >
-          <Animated.View
-            style={{
-              transform: [
-                {
-                  rotate: animation.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '45deg'],
-                  }),
-                },
-              ],
-            }}
-          >
-            <Ionicons name="add" size={32} color="#fff" />
-          </Animated.View>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {isQuote ? 'New Quote' : 'New Update'}
+        </Text>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={[
+            styles.submitButton,
+            !postData.content.trim() && styles.submitButtonDisabled,
+          ]}
+          disabled={!postData.content.trim()}
+        >
+          <Text style={styles.submitButtonText}>Post</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      <ScrollView
+        style={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.typeSelector}>
+          <Text style={styles.typeLabel}>Post Type</Text>
+          <View style={styles.typeToggle}>
+            <Text style={[styles.typeText, !isQuote && styles.activeType]}>
+              Update
+            </Text>
+            <Switch
+              value={isQuote}
+              onValueChange={handleTypeToggle}
+              trackColor={{ false: '#3d3d45', true: COLORS.primary }}
+              thumbColor="#fff"
+              ios_backgroundColor="#3d3d45"
+              style={styles.switch}
+            />
+            <Text style={[styles.typeText, isQuote && styles.activeType]}>
+              Quote
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[
+              styles.input,
+              styles.contentInput,
+              isQuote && styles.quoteInput,
+            ]}
+            placeholder={isQuote ? 'Enter the quote...' : 'What\'s on your mind?'}
+            placeholderTextColor="#666"
+            multiline
+            value={postData.content}
+            onChangeText={(text) => updatePostData('content', text)}
+          />
+
+          {isQuote && (
+            <View style={styles.quoteDetails}>
+              <TextInput
+                style={styles.input}
+                placeholder="Original Author"
+                placeholderTextColor="#666"
+                value={postData.quoteInfo?.originalAuthor}
+                onChangeText={(text) => updatePostData('originalAuthor', text)}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Book Title (optional)"
+                placeholderTextColor="#666"
+                value={postData.quoteInfo?.bookTitle}
+                onChangeText={(text) => updatePostData('bookTitle', text)}
+              />
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.halfInput]}
+                  placeholder="Page Number"
+                  placeholderTextColor="#666"
+                  keyboardType="number-pad"
+                  value={postData.quoteInfo?.pageNumber}
+                  onChangeText={(text) => updatePostData('pageNumber', text)}
+                />
+                <TextInput
+                  style={[styles.input, styles.halfInput]}
+                  placeholder="Year"
+                  placeholderTextColor="#666"
+                  keyboardType="number-pad"
+                  value={postData.quoteInfo?.year}
+                  onChangeText={(text) => updatePostData('year', text)}
+                />
+              </View>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -171,54 +187,104 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#292933',
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000',
-  },
-  menuContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3d3d45',
   },
-  mainButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#32d296',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 100,
-  },
-  mainButtonActive: {
-    backgroundColor: '#FF6B6B',
-  },
-  optionButton: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
-  optionTouchable: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  optionLabel: {
+  headerTitle: {
+    fontSize: 18,
     color: '#fff',
-    marginTop: 8,
-    fontSize: 12,
-    fontFamily: "Sunset-Serial-Medium",
+    fontWeight: '600',
+    fontFamily: 'Sunset-Serial-Medium',
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Sunset-Serial-Medium',
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  typeSelector: {
+    marginBottom: 20,
+  },
+  typeLabel: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 8,
+    fontFamily: 'Sunset-Serial-Medium',
+  },
+  typeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#3d3d45',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 20,
+    padding: 4,
+  },
+  typeText: {
+    color: '#fff',
+    opacity: 0.6,
+    fontSize: 14,
+    paddingHorizontal: 12,
+    fontFamily: 'Sunset-Serial-Medium',
+  },
+  activeType: {
+    opacity: 1,
+  },
+  switch: {
+    marginHorizontal: 8,
+  },
+  inputContainer: {
+    flex: 1,
+  },
+  input: {
+    backgroundColor: '#3d3d45',
+    borderRadius: 12,
+    padding: 16,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 12,
+    fontFamily: 'Sunset-Serial-Medium',
+  },
+  contentInput: {
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  quoteInput: {
+    fontStyle: 'italic',
+    fontSize: 18,
+    lineHeight: 26,
+  },
+  quoteDetails: {
+    marginTop: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  halfInput: {
+    flex: 0.48,
   },
 });

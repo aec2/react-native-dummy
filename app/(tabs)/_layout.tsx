@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS } from '@/constants/theme'
 import { BlurView } from 'expo-blur';
+import { router } from 'expo-router';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -15,36 +16,36 @@ interface CreateOption {
 }
 
 const createOptions: CreateOption[] = [
-  { 
-    id: '1', 
-    title: 'New Post', 
-    icon: 'create-outline',
-    color: '#32d296'
-  },
-  { 
-    id: '2', 
-    title: 'New Quote', 
-    icon: 'chatbubble-outline',
-    color: '#6C5CE7'
-  },
-  { 
-    id: '3', 
-    title: 'New Photo', 
-    icon: 'camera-outline',
-    color: '#FF7675'
-  },
-  { 
-    id: '4', 
-    title: 'New Poll', 
-    icon: 'bar-chart-outline',
-    color: '#FDCB6E'
-  },
-  { 
-    id: '5', 
-    title: 'New Story', 
-    icon: 'book-outline',
-    color: '#00B894'
-  },
+    { 
+        id: '1', 
+        title: 'New Post', 
+        icon: 'create-outline',
+        color: '#32d296'
+    },
+    { 
+        id: '2', 
+        title: 'New Quote', 
+        icon: 'chatbubble-outline',
+        color: '#6C5CE7'
+    },
+    { 
+        id: '3', 
+        title: 'New Review', 
+        icon: 'document-outline',
+        color: '#FF7675'
+    },
+    { 
+        id: '4', 
+        title: 'New Poll', 
+        icon: 'bar-chart-outline',
+        color: '#FDCB6E'
+    },
+    { 
+        id: '5', 
+        title: 'New Story', 
+        icon: 'book-outline',
+        color: '#00B894'
+    },
 ];
 
 const { width, height } = Dimensions.get('window');
@@ -64,6 +65,17 @@ export default function TabLayout() {
         }).start();
 
         setIsOpen(!isOpen);
+    };
+
+    const handleOptionPress = (option: CreateOption) => {
+        setIsOpen(false);
+        
+        if (option.title === 'New Post' || option.title === 'New Quote') {
+            router.push('/create');
+        } else {
+            // Handle other options
+            console.log(`Selected: ${option.title}`);
+        }
     };
 
     const renderOption = (option: CreateOption, index: number) => {
@@ -99,11 +111,7 @@ export default function TabLayout() {
             <Animated.View key={option.id} style={[styles.optionButton, optionStyle]}>
                 <TouchableOpacity
                     style={[styles.optionTouchable, { backgroundColor: option.color }]}
-                    onPress={() => {
-                        toggleMenu();
-                        // Handle option press
-                        console.log(`Selected: ${option.title}`);
-                    }}
+                    onPress={() => handleOptionPress(option)}
                 >
                     <Ionicons name={option.icon} size={24} color="#fff" />
                 </TouchableOpacity>
