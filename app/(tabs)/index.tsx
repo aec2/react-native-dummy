@@ -18,7 +18,7 @@ export default function Index() {
     setCount(newCount);
     
     // Check if counter limit is reached
-    if (counterLimit && newCount === parseInt(counterLimit)) {
+    if (counterLimit && newCount === parseInt(counterLimit, 10)) {
       Vibration.vibrate(500); // Vibrate for 500ms
     }
   };
