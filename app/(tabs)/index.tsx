@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View, StyleSheet, TextInput } from "react-native";
+import { Text, TouchableOpacity, View, StyleSheet, TextInput, Modal, Vibration } from "react-native";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -6,9 +6,26 @@ export default function Index() {
   const [count, setCount] = useState(0);
   const [counterName, setCounterName] = useState("Unnamed Counter");
   const [isEditing, setIsEditing] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [counterLimit, setCounterLimit] = useState("");
   
   const handleNameSave = () => {
     setIsEditing(false);
+  };
+
+  const handleIncrement = () => {
+    const newCount = count + 1;
+    setCount(newCount);
+    
+    // Check if counter limit is reached
+    if (counterLimit && newCount === parseInt(counterLimit)) {
+      Vibration.vibrate(500); // Vibrate for 500ms
+    }
+  };
+
+  const handleReset = () => {
+    setCount(0);
+    setIsMenuVisible(false);
   };
   
   return (
@@ -29,12 +46,51 @@ export default function Index() {
           </TouchableOpacity>
         )}
         <TouchableOpacity 
-          style={styles.resetButton} 
-          onPress={() => setCount(0)}
+          style={styles.menuButton} 
+          onPress={() => setIsMenuVisible(true)}
         >
-          <Ionicons name="refresh" size={24} color="#fff" />
+          <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
+      
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isMenuVisible}
+        onRequestClose={() => setIsMenuVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Options</Text>
+            
+            <View style={styles.optionItem}>
+              <Text style={styles.optionLabel}>Counter Limit:</Text>
+              <TextInput
+                style={styles.limitInput}
+                value={counterLimit}
+                onChangeText={setCounterLimit}
+                keyboardType="numeric"
+                placeholder="Set limit"
+                placeholderTextColor="#666"
+              />
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.optionButton}
+              onPress={handleReset}
+            >
+              <Text style={styles.optionButtonText}>Reset Counter</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.optionButton, styles.closeButton]}
+              onPress={() => setIsMenuVisible(false)}
+            >
+              <Text style={styles.optionButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       
       <View style={styles.counterContainer}>
         <Text style={styles.counterText}>{count}</Text>
@@ -52,7 +108,7 @@ export default function Index() {
         
         <TouchableOpacity 
           style={styles.button}
-          onPress={() => setCount(count + 1)}
+          onPress={handleIncrement}
         >
           <Text style={styles.buttonText}>+</Text>
         </TouchableOpacity>
@@ -81,20 +137,60 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontFamily: "Sunset-Serial-Medium",
   },
-  resetButton: {
+  menuButton: {
     position: "absolute",
     right: 20,
   },
-  nameInput: {
-    fontSize: 18,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#292933",
+    borderRadius: 15,
+    padding: 20,
+    width: "80%",
+    borderWidth: 1,
+    borderColor: "#3d3d45",
+  },
+  modalTitle: {
+    fontSize: 20,
     color: "#fff",
+    marginBottom: 20,
     textAlign: "center",
-    fontWeight: "500",
-    borderBottomWidth: 1,
-    borderBottomColor: "#32d296",
-    paddingBottom: 2,
-    minWidth: 150,
-    fontFamily: "Sunset-Serial-Medium"
+    fontFamily: "Sunset-Serial-Medium",
+  },
+  optionItem: {
+    marginBottom: 20,
+  },
+  optionLabel: {
+    color: "#fff",
+    marginBottom: 8,
+    fontSize: 16,
+  },
+  limitInput: {
+    backgroundColor: "#3d3d45",
+    color: "#fff",
+    padding: 10,
+    borderRadius: 8,
+    fontSize: 16,
+  },
+  optionButton: {
+    backgroundColor: "#3d3d45",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  closeButton: {
+    backgroundColor: "#32d296",
+  },
+  optionButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Sunset-Serial-Medium",
   },
   counterContainer: {
     flex: 1,
@@ -126,5 +222,16 @@ const styles = StyleSheet.create({
     width: 1,
     height: "100%",
     backgroundColor: "#3d3d45",
+  },
+  nameInput: {
+    fontSize: 18,
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "500",
+    borderBottomWidth: 1,
+    borderBottomColor: "#32d296",
+    paddingBottom: 2,
+    minWidth: 150,
+    fontFamily: "Sunset-Serial-Medium"
   },
 });
